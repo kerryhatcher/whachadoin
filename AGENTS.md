@@ -3,21 +3,28 @@
 Work log + todo tracker (`kwd` CLI/TUI) plus a Claude Code plugin that drives it from
 any session. See `docs/superpowers/specs/` and `docs/superpowers/plans/` for designs.
 
+## Versioning & releases (release-please)
+
+Versions and releases are automated by **release-please** — do NOT bump versions by hand.
+
+- Commit with **Conventional Commits** (`feat:`, `fix:`, `docs:`, `ci:`, `chore:`,
+  `feat!:`/`BREAKING CHANGE:` for majors). release-please reads them.
+- `.github/workflows/release-please.yml` maintains a standing **release PR** on `main`
+  that bumps the version, updates `CHANGELOG.md`, and — when merged — tags and publishes
+  a GitHub Release. Config: `release-please-config.json` + `.release-please-manifest.json`.
+- Single repo-wide version (bumps `pyproject.toml`). **When the plugin is built**, add its
+  manifest to the package's `extra-files` in `release-please-config.json` (see the
+  `$comment` there) so `plugin/.claude-plugin/plugin.json` version tracks releases.
+
 ## Publishing the plugin to the marketplace
 
 The plugin is listed on the personal marketplace repo
 **https://github.com/kerryhatcher/hatch-plugins**. That marketplace references this repo;
-it does not hold a copy. So whenever the plugin changes in a way the marketplace should
-pick up, the marketplace needs to be told.
+it does not hold a copy. So each release, the marketplace is told to pick up the change.
 
-**After the plugin is updated and merged to `main`:**
-
-1. Bump the `version` in `plugin/.claude-plugin/plugin.json`.
-2. Merge to `main`.
-3. An issue is opened automatically on `kerryhatcher/hatch-plugins` by the
-   `.github/workflows/marketplace-issue.yml` workflow (fires when the plugin manifest's
-   version changes on `main`). Nothing else to do if the workflow is enabled and its
-   token secret is set.
+**Flow:** merge the release-please PR → a GitHub Release is published → the
+`.github/workflows/marketplace-issue.yml` workflow opens an issue on
+`kerryhatcher/hatch-plugins` automatically. Nothing manual if the token secret is set.
 
 **If the workflow is disabled or its token is missing, open the issue manually:**
 

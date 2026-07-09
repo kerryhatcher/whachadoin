@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "python",
+      "package-name": "whachadoin",
+      "changelog-path": "CHANGELOG.md"
+    }
+  },
+  "$comment": "When the plugin is built, add plugin/.claude-plugin/plugin.json to this package's extra-files so its version tracks releases: \"extra-files\": [{\"type\": \"json\", \"path\": \"plugin/.claude-plugin/plugin.json\", \"jsonpath\": \"$.version\"}]"
+}
