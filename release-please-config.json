@@ -4,8 +4,19 @@
     ".": {
       "release-type": "python",
       "package-name": "whachadoin",
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "plugin/.claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": ".claude-plugin/marketplace.json",
+          "jsonpath": "$.plugins[0].version"
+        }
+      ]
     }
-  },
-  "$comment": "When the plugin is built, add plugin/.claude-plugin/plugin.json to this package's extra-files so its version tracks releases: \"extra-files\": [{\"type\": \"json\", \"path\": \"plugin/.claude-plugin/plugin.json\", \"jsonpath\": \"$.version\"}]"
+  }
 }

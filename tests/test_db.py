@@ -1,3 +1,5 @@
+import sqlite3
+
 import pytest
 from pydantic import ValidationError
 
@@ -21,6 +23,19 @@ def test_logentry_defaults():
     e = LogEntry(ts="2026-07-09T00:00:00+00:00", text="did a thing")
     assert e.id is None
     assert e.todo_id is None
+    assert e.path == ""
+    assert e.repo is None
+
+
+def test_logentry_round_trip_with_path_and_repo():
+    e = LogEntry(
+        ts="2026-07-09T00:00:00+00:00",
+        text="did a thing",
+        path="/some/dir",
+        repo="whachadoin",
+    )
+    assert e.path == "/some/dir"
+    assert e.repo == "whachadoin"
 
 
 from pathlib import Path
@@ -125,3 +140,68 @@ def test_list_log_since_filter(conn):
     assert dbmod.list_log(conn, since="2999-01-01") == []
     # a since date in the past includes it
     assert len(dbmod.list_log(conn, since="2000-01-01")) == 1
+
+
+def test_find_repo_at_cwd(tmp_path):
+    (tmp_path / ".git").mkdir()
+    assert dbmod.find_repo(tmp_path) == tmp_path.name
+
+
+def test_find_repo_nested_ancestor(tmp_path):
+    repo = tmp_path / "myrepo"
+    (repo / ".git").mkdir(parents=True)
+    nested = repo / "src" / "pkg"
+    nested.mkdir(parents=True)
+    assert dbmod.find_repo(nested) == "myrepo"
+
+
+def test_find_repo_worktree_git_file(tmp_path):
+    repo = tmp_path / "worktree-repo"
+    repo.mkdir()
+    (repo / ".git").write_text("gitdir: /elsewhere/.git/worktrees/foo\n")
+    assert dbmod.find_repo(repo) == "worktree-repo"
+
+
+def test_find_repo_none_in_chain(tmp_path):
+    nested = tmp_path / "a" / "b"
+    nested.mkdir(parents=True)
+    assert dbmod.find_repo(nested) is None
+
+
+def test_add_log_auto_captures_path_and_repo(conn, tmp_path, monkeypatch):
+    repo = tmp_path / "someproj"
+    (repo / ".git").mkdir(parents=True)
+    monkeypatch.chdir(repo)
+    entry = dbmod.add_log(conn, "did stuff")
+    assert entry.path == str(repo)
+    assert entry.repo == "someproj"
+
+
+def test_add_log_explicit_path_and_repo_override(conn):
+    entry = dbmod.add_log(conn, "explicit", path="/explicit/dir", repo="explicit-repo")
+    assert entry.path == "/explicit/dir"
+    assert entry.repo == "explicit-repo"
+
+
+def test_migration_adds_columns_to_old_shape_db(tmp_path):
+    db_path = tmp_path / "old.db"
+    old_conn = sqlite3.connect(str(db_path))
+    old_conn.execute(
+        "CREATE TABLE log (id INTEGER PRIMARY KEY, ts TEXT NOT NULL, "
+        "text TEXT NOT NULL, todo_id INTEGER)"
+    )
+    old_conn.execute("INSERT INTO log (ts, text) VALUES (?, ?)", ("2026-01-01", "old row"))
+    old_conn.commit()
+    old_conn.close()
+
+    c = dbmod.connect(db_path)
+    entries = dbmod.list_log(c)
+    assert len(entries) == 1
+    assert entries[0].path == ""
+    assert entries[0].repo is None
+
+    # reopening is a no-op migration
+    c2 = dbmod.connect(db_path)
+    assert len(dbmod.list_log(c2)) == 1
+    c.close()
+    c2.close()

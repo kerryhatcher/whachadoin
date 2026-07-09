@@ -38,7 +38,9 @@ CREATE TABLE IF NOT EXISTS log (
   id      INTEGER PRIMARY KEY,
   ts      TEXT NOT NULL,
   text    TEXT NOT NULL,
-  todo_id INTEGER REFERENCES todos(id)
+  todo_id INTEGER REFERENCES todos(id),
+  path    TEXT NOT NULL DEFAULT '',
+  repo    TEXT
 );
 """
 
@@ -47,12 +49,36 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def find_repo(start: str | os.PathLike | None = None) -> str | None:
+    """Walk up from `start` (default cwd) looking for a `.git` file-or-dir.
+
+    Pure Python, no git subprocess — works for worktrees, where `.git` is a file.
+    """
+    d = os.path.abspath(start if start is not None else os.getcwd())
+    while True:
+        if os.path.exists(os.path.join(d, ".git")):
+            return os.path.basename(d)
+        parent = os.path.dirname(d)
+        if parent == d:
+            return None
+        d = parent
+
+
+def _migrate_log_columns(conn: sqlite3.Connection) -> None:
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(log)")}
+    if "path" not in cols:
+        conn.execute("ALTER TABLE log ADD COLUMN path TEXT NOT NULL DEFAULT ''")
+    if "repo" not in cols:
+        conn.execute("ALTER TABLE log ADD COLUMN repo TEXT")
+
+
 def connect(db_path: str | os.PathLike | None = None) -> sqlite3.Connection:
     path = resolve_db_path(db_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(path))
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
+    _migrate_log_columns(conn)
     conn.commit()
     return conn
 
@@ -96,24 +122,29 @@ def done_todo(conn: sqlite3.Connection, todo_id: int) -> Todo:
     conn.execute(
         "UPDATE todos SET status = 'done', done_at = ? WHERE id = ?", (now, todo_id)
     )
-    conn.execute(
-        "INSERT INTO log (ts, text, todo_id) VALUES (?, ?, ?)",
-        (now, f"completed todo #{todo_id}: {todo.text}", todo_id),
-    )
-    conn.commit()
+    add_log(conn, f"completed todo #{todo_id}: {todo.text}", todo_id=todo_id)
     return get_todo(conn, todo_id)
 
 
 def add_log(
-    conn: sqlite3.Connection, text: str, todo_id: int | None = None
+    conn: sqlite3.Connection,
+    text: str,
+    *,
+    todo_id: int | None = None,
+    path: str | None = None,
+    repo: str | None = None,
 ) -> LogEntry:
     text = text.strip()
     if not text:
         raise ValueError("log text must not be empty")
-    entry = LogEntry(ts=_now(), text=text, todo_id=todo_id)
+    if path is None:
+        path = os.getcwd()
+    if repo is None:
+        repo = find_repo()
+    entry = LogEntry(ts=_now(), text=text, todo_id=todo_id, path=path, repo=repo)
     cur = conn.execute(
-        "INSERT INTO log (ts, text, todo_id) VALUES (?, ?, ?)",
-        (entry.ts, entry.text, entry.todo_id),
+        "INSERT INTO log (ts, text, todo_id, path, repo) VALUES (?, ?, ?, ?, ?)",
+        (entry.ts, entry.text, entry.todo_id, entry.path, entry.repo),
     )
     conn.commit()
     entry.id = cur.lastrowid

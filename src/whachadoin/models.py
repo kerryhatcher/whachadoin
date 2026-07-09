@@ -20,3 +20,5 @@ class LogEntry(BaseModel):
     ts: str
     text: str
     todo_id: Optional[int] = None
+    path: str = ""
+    repo: Optional[str] = None

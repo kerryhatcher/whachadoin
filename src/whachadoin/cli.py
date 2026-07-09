@@ -43,7 +43,8 @@ def log(
     if words and words[0] == "ls":
         for e in dbmod.list_log(conn, today=today, since=since):
             link = f" (todo #{e.todo_id})" if e.todo_id else ""
-            typer.echo(f"{e.ts}  {e.text}{link}")
+            tag = f"[{e.repo}] " if e.repo else ""
+            typer.echo(f"{e.ts}  {tag}{e.text}{link}")
         return
     text = " ".join(words).strip()
     try:
