@@ -1,0 +1,60 @@
+name: Notify marketplace on plugin version bump
+
+# Opens an issue on the personal marketplace (kerryhatcher/hatch-plugins) whenever the
+# plugin manifest's version changes on main. See AGENTS.md for the token setup.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "plugin/.claude-plugin/plugin.json"
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # need the previous commit to diff the version
+
+      - name: Detect version change and open issue
+        env:
+          # Fine-grained PAT with Issues:write on kerryhatcher/hatch-plugins.
+          # Missing secret -> the step logs and exits 0 (no failure).
+          GH_TOKEN: ${{ secrets.HATCH_PLUGINS_TOKEN }}
+        run: |
+          set -euo pipefail
+          manifest="plugin/.claude-plugin/plugin.json"
+
+          new_version="$(jq -r '.version // empty' "$manifest")"
+          if [ -z "$new_version" ]; then
+            echo "No .version in $manifest; nothing to notify. Add a version field to enable this."
+            exit 0
+          fi
+
+          # Previous version from the parent commit (empty if the file/field is new).
+          old_version="$(git show HEAD~1:"$manifest" 2>/dev/null | jq -r '.version // empty' 2>/dev/null || true)"
+
+          if [ "$new_version" = "$old_version" ]; then
+            echo "Version unchanged ($new_version); no issue opened."
+            exit 0
+          fi
+
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "HATCH_PLUGINS_TOKEN not set; skipping issue creation."
+            echo "Would have notified: whachadoin plugin v$new_version (was '${old_version:-none}')."
+            exit 0
+          fi
+
+          echo "Version changed: '${old_version:-none}' -> '$new_version'. Opening issue."
+          gh issue create -R kerryhatcher/hatch-plugins \
+            --title "Add/update whachadoin plugin v$new_version" \
+            --body "Please add/update the **whachadoin** plugin in the marketplace.
+
+          - Source repo: https://github.com/kerryhatcher/whachadoin
+          - Plugin path: \`./plugin\` (manifest: \`plugin/.claude-plugin/plugin.json\`)
+          - Version: v$new_version
+          - Previous version: ${old_version:-none}
+          - Adds cross-session work logging + todo tracking via the \`kwd\` CLI.
+
+          _Opened automatically by whachadoin's marketplace-issue workflow._"
