@@ -29,9 +29,8 @@ it does not hold a copy. So each release, the marketplace is told to pick up the
 **If the workflow is disabled or its token is missing, open the issue manually:**
 
 ```bash
-# NOTE: this machine's gh is usually authed to Cox GHE, not github.com.
-# Auth to github.com first (one time):  gh auth login -h github.com
-gh issue create -R kerryhatcher/hatch-plugins \
+# NOTE: prefix GH_HOST=github.com (default host is Cox GHE). See the gh section below.
+GH_HOST=github.com gh issue create -R kerryhatcher/hatch-plugins \
   --title "Add/update whachadoin plugin vX.Y.Z" \
   --body "Please add/update the **whachadoin** plugin in the marketplace.
 
@@ -50,6 +49,31 @@ default `GITHUB_TOKEN` cannot write to another repo. Create a fine-grained PAT w
 **Issues: write** on `hatch-plugins`, and store it in this repo's secrets as
 `HATCH_PLUGINS_TOKEN` (Settings → Secrets and variables → Actions). Until that secret
 exists the workflow no-ops with a log message instead of failing.
+
+## GitHub CLI — host switching (IMPORTANT)
+
+`gh`'s default host is **REDACTED-INTERNAL-HOST** (Cox). This repo and the marketplace live on
+**github.com**. `-R owner/repo` does NOT switch hosts — it resolves against the default,
+so a bare `gh -R kerryhatcher/whachadoin ...` hits Cox GHE and 404s.
+
+**For any github.com repo, prefix `GH_HOST=github.com`:**
+
+```bash
+GH_HOST=github.com gh pr list  -R kerryhatcher/whachadoin
+GH_HOST=github.com gh run list -R kerryhatcher/whachadoin
+GH_HOST=github.com gh issue create -R kerryhatcher/hatch-plugins ...
+```
+
+Both hosts are authenticated (`gh auth status`); the active github.com account is the
+personal `kerryhatcher`, so no `gh auth switch` is needed — only the host prefix.
+
+One-time repo setting (already applied to whachadoin, redo for new repos) so release-please
+can open its PR:
+
+```bash
+GH_HOST=github.com gh api -X PUT repos/<owner>/<repo>/actions/permissions/workflow \
+  -F default_workflow_permissions=write -F can_approve_pull_request_reviews=true
+```
 
 ## Build / test conventions
 
