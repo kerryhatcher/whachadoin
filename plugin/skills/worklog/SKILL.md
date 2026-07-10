@@ -31,6 +31,15 @@ Path and repo are captured automatically by `kwd` — do NOT prefix the repo or
 path into the text yourself. On "log this", summarize the relevant recent
 work into one concise line before logging it.
 
+## Proactive journaling (no prompt needed)
+
+When you finish a **substantial** task or milestone — the kind where you'd
+naturally write an end-of-task recap — also persist a 1-3 line high-level recap
+with `kwd log "<recap>"`, without being asked. One entry per completed task, not
+per step; high-level, not line-by-line; skip trivial exchanges and mid-task
+progress. A SessionStart hook reminds you of this each session. Note briefly that
+you logged it; don't narrate it heavily.
+
 ## Add / complete todos
 
 ```
