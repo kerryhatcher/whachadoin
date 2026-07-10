@@ -15,6 +15,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  id-token: write # OIDC for PyPI Trusted Publishing
 
 jobs:
   release-please:
@@ -25,6 +26,18 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      # Build + publish the just-released version to PyPI via Trusted Publishing.
+      # Checkout lands on the post-merge commit that carries the bumped version.
+      - uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.release_created }}
+      - uses: astral-sh/setup-uv@v5
+        if: ${{ steps.release.outputs.release_created }}
+      - name: Build & publish to PyPI
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          uv build
+          uv publish --trusted-publishing always
 
       - name: Notify marketplace of new release
         if: ${{ steps.release.outputs.release_created }}
