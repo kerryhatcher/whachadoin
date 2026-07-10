@@ -183,6 +183,50 @@ def test_add_log_explicit_path_and_repo_override(conn):
     assert entry.repo == "explicit-repo"
 
 
+def test_add_log_auto_captures_session(conn, monkeypatch):
+    monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "sess-abc")
+    assert dbmod.add_log(conn, "from a session").session == "sess-abc"
+
+
+def test_add_log_no_session_when_unset(conn, monkeypatch):
+    monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
+    assert dbmod.add_log(conn, "no session").session is None
+
+
+def test_add_todo_auto_captures_session(conn, monkeypatch):
+    monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "sess-xyz")
+    t = dbmod.add_todo(conn, "task from session")
+    assert t.session == "sess-xyz"
+    assert dbmod.get_todo(conn, t.id).session == "sess-xyz"
+
+
+def test_session_explicit_override(conn, monkeypatch):
+    monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "env-sess")
+    assert dbmod.add_log(conn, "x", session="explicit").session == "explicit"
+    assert dbmod.add_todo(conn, "y", session="explicit").session == "explicit"
+
+
+def test_migration_adds_session_to_old_shape_todos(tmp_path):
+    db_path = tmp_path / "oldtodos.db"
+    old = sqlite3.connect(str(db_path))
+    old.execute(
+        "CREATE TABLE todos (id INTEGER PRIMARY KEY, text TEXT NOT NULL, "
+        "status TEXT NOT NULL DEFAULT 'open', priority INTEGER NOT NULL DEFAULT 0, "
+        "created_at TEXT NOT NULL, done_at TEXT)"
+    )
+    old.execute(
+        "INSERT INTO todos (text, created_at) VALUES (?, ?)", ("old todo", "2026-01-01")
+    )
+    old.commit()
+    old.close()
+
+    c = dbmod.connect(db_path)
+    todos = dbmod.list_todos(c)
+    assert len(todos) == 1
+    assert todos[0].session is None
+    c.close()
+
+
 def test_migration_adds_columns_to_old_shape_db(tmp_path):
     db_path = tmp_path / "old.db"
     old_conn = sqlite3.connect(str(db_path))

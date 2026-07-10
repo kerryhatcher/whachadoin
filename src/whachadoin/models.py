@@ -13,6 +13,7 @@ class Todo(BaseModel):
     priority: int = 0
     created_at: str
     done_at: Optional[str] = None
+    session: Optional[str] = None  # Claude Code session UUID, if added from a session
 
 
 class LogEntry(BaseModel):
@@ -22,3 +23,4 @@ class LogEntry(BaseModel):
     todo_id: Optional[int] = None
     path: str = ""
     repo: Optional[str] = None
+    session: Optional[str] = None  # Claude Code session UUID, if added from a session
