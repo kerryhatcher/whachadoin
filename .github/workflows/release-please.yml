@@ -37,6 +37,12 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
         run: |
           uv build
+          # Guard: refuse to publish if the sdist leaks internal infra (see the
+          # 0.2.0 postmortem — sdist once bundled uv.lock/AGENTS/docs).
+          if tar xzOf dist/*.tar.gz | grep -qiE 'coxautoinc\.com|/Users/'; then
+            echo "::error::sdist contains internal-infra strings; refusing to publish"
+            exit 1
+          fi
           uv publish --trusted-publishing always
 
       - name: Notify marketplace of new release
