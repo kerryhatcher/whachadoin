@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/kerryhatcher/whachadoin/compare/whachadoin-v0.3.0...whachadoin-v0.4.0) (2026-07-10)
+
+
+### Features
+
+* add whachadoin console script alongside kwd ([6642ab5](https://github.com/kerryhatcher/whachadoin/commit/6642ab5e2302f0b3e5754dd103fdb66eb6f38327))
+
 ## [0.3.0](https://github.com/kerryhatcher/whachadoin/compare/whachadoin-v0.2.0...whachadoin-v0.3.0) (2026-07-10)
 
 
