@@ -54,7 +54,7 @@ Convert the uv scaffold to a src-layout package with the `kwd` entry point and t
 - [ ] **Step 1: Add runtime and dev dependencies via uv**
 
 ```bash
-cd /home/user/projects/whachadoin
+cd ~/projects/whachadoin
 uv add typer pydantic textual
 uv add --dev pytest
 ```
@@ -64,14 +64,14 @@ Expected: `uv` resolves and writes them into `pyproject.toml` `[project.dependen
 - [ ] **Step 2: Remove the placeholder entry file**
 
 ```bash
-rm /home/user/projects/whachadoin/main.py
+rm ~/projects/whachadoin/main.py
 ```
 
 - [ ] **Step 3: Create the package directory with an empty `__init__.py`**
 
 ```bash
-mkdir -p /home/user/projects/whachadoin/src/whachadoin
-mkdir -p /home/user/projects/whachadoin/tests
+mkdir -p ~/projects/whachadoin/src/whachadoin
+mkdir -p ~/projects/whachadoin/tests
 ```
 
 Create `src/whachadoin/__init__.py` with a single line:
@@ -131,7 +131,7 @@ Note: if `uv add --dev` wrote `[tool.uv] dev-dependencies` instead of `[dependen
 - [ ] **Step 6: Verify the package imports and the entry point resolves**
 
 ```bash
-cd /home/user/projects/whachadoin
+cd ~/projects/whachadoin
 uv run python -c "import whachadoin; import whachadoin.cli; print('ok')"
 uv run kwd --help
 ```
@@ -698,7 +698,7 @@ Note: `tui` imports `.tui` lazily so the rest of the CLI works before Task 6 lan
 - [ ] **Step 2: Verify commands work end-to-end against a temp DB**
 
 ```bash
-cd /home/user/projects/whachadoin
+cd ~/projects/whachadoin
 export WHACHADOIN_DB="$(mktemp -d)/log.db"
 uv run kwd todo add "write the code" --priority 3
 uv run kwd todo add "read the spec"
@@ -837,7 +837,7 @@ def run(db_override: Optional[str] = None) -> None:
 - [ ] **Step 2: Manual smoke test**
 
 ```bash
-cd /home/user/projects/whachadoin
+cd ~/projects/whachadoin
 export WHACHADOIN_DB="$(mktemp -d)/log.db"
 uv run kwd tui
 # In the app: press `a`, type a todo, Enter → appears left.

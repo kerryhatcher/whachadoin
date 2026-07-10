@@ -56,9 +56,10 @@ exists the workflow no-ops with a log message instead of failing.
 
 ## GitHub CLI — host switching (IMPORTANT)
 
-`gh`'s default host is **REDACTED-INTERNAL-HOST** (Cox). This repo and the marketplace live on
-**github.com**. `-R owner/repo` does NOT switch hosts — it resolves against the default,
-so a bare `gh -R kerryhatcher/whachadoin ...` hits Cox GHE and 404s.
+`gh`'s default host may not be **github.com** (e.g. if a GitHub Enterprise host is configured
+as the default). This repo and the marketplace live on **github.com**. `-R owner/repo` does
+NOT switch hosts — it resolves against the default, so a bare
+`gh -R kerryhatcher/whachadoin ...` can hit the wrong host and 404.
 
 **For any github.com repo, prefix `GH_HOST=github.com`:**
 
@@ -68,8 +69,8 @@ GH_HOST=github.com gh run list -R kerryhatcher/whachadoin
 GH_HOST=github.com gh issue create -R kerryhatcher/hatch-plugins ...
 ```
 
-Both hosts are authenticated (`gh auth status`); the active github.com account is the
-personal `kerryhatcher`, so no `gh auth switch` is needed — only the host prefix.
+Check both hosts are authenticated with `gh auth status`; if the correct account is already
+active for each host, no `gh auth switch` is needed — only the host prefix.
 
 One-time repo setting (already applied to whachadoin, redo for new repos) so release-please
 can open its PR:

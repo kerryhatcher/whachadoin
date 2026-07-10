@@ -464,13 +464,13 @@ In `src/whachadoin/cli.py`, inside the `log` command's `if words and words[0] ==
 - [ ] **Step 2: Verify end-to-end against a temp DB, inside and outside a git repo**
 
 ```bash
-cd /home/user/projects/whachadoin
+cd ~/projects/whachadoin
 export WHACHADOIN_DB="$(mktemp -d)/log.db"
 uv run kwd log "built the plugin"          # cwd IS a git repo → repo=whachadoin
 cd "$(mktemp -d)"
 uv run kwd log "one-off note, no repo"      # not a repo → no tag
 uv run kwd --db "$WHACHADOIN_DB" log ls
-cd /home/user/projects/whachadoin
+cd ~/projects/whachadoin
 unset WHACHADOIN_DB
 ```
 
@@ -595,7 +595,7 @@ skill only writes to `kwd` when you explicitly want something remembered.
 - [ ] **Step 4: Validate the JSON parses**
 
 ```bash
-cd /home/user/projects/whachadoin
+cd ~/projects/whachadoin
 uv run python -c "import json; json.load(open('.claude-plugin/marketplace.json')); json.load(open('plugin/.claude-plugin/plugin.json')); print('json ok')"
 ```
 
@@ -695,7 +695,7 @@ If a `kwd` command fails with "command not found", tell the user to install it:
 - [ ] **Step 2: Validate the frontmatter parses**
 
 ```bash
-cd /home/user/projects/whachadoin
+cd ~/projects/whachadoin
 uv run python -c "import re,sys; t=open('plugin/skills/worklog/SKILL.md').read(); assert t.startswith('---'); print('frontmatter present:', '---' in t[3:])"
 ```
 
