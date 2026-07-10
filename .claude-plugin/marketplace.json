@@ -8,7 +8,7 @@
       "name": "whachadoin",
       "description": "Cross-session work logging: drive the kwd CLI to log work, manage persistent todos, and recall what you worked on.",
       "source": "./plugin",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   ]
 }

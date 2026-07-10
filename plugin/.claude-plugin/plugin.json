@@ -1,7 +1,7 @@
 {
   "name": "whachadoin",
   "description": "Log work, manage persistent cross-session todos, and answer \"what am I working on\" / \"what did I work on last week\" by driving the kwd CLI.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "Kerry Hatcher"
   },
