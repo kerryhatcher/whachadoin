@@ -22,9 +22,13 @@ The plugin is listed on the personal marketplace repo
 **https://github.com/kerryhatcher/hatch-plugins**. That marketplace references this repo;
 it does not hold a copy. So each release, the marketplace is told to pick up the change.
 
-**Flow:** merge the release-please PR → a GitHub Release is published → the
-`.github/workflows/marketplace-issue.yml` workflow opens an issue on
-`kerryhatcher/hatch-plugins` automatically. Nothing manual if the token secret is set.
+**Flow:** merge the release-please PR → `release-please.yml` publishes a GitHub Release
+AND, in the same run (its `Notify marketplace` step, gated on `release_created`), opens an
+issue on `kerryhatcher/hatch-plugins`. Nothing manual if the token secret is set.
+
+Why the notify step is inside `release-please.yml` and not a separate `on: release`
+workflow: a release published by the default `GITHUB_TOKEN` does **not** trigger other
+workflows (GitHub recursion guard), so an `on: release` trigger would silently never fire.
 
 **If the workflow is disabled or its token is missing, open the issue manually:**
 

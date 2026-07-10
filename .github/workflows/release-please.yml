@@ -1,8 +1,12 @@
 name: release-please
 
 # Maintains a release PR from Conventional Commits; merging it bumps the version,
-# updates CHANGELOG.md, tags, and publishes a GitHub Release. The release then triggers
-# marketplace-issue.yml. See AGENTS.md.
+# updates CHANGELOG.md, tags, and publishes a GitHub Release. When a release is cut,
+# a follow-up step opens an issue on the marketplace (kerryhatcher/hatch-plugins).
+#
+# NOTE: the notify step lives HERE, not in a separate `on: release` workflow, because
+# a release published by the default GITHUB_TOKEN does not trigger other workflows.
+# Keeping it in the same run sidesteps that. See AGENTS.md.
 
 on:
   push:
@@ -16,7 +20,31 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - id: release
+        uses: googleapis/release-please-action@v4
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      - name: Notify marketplace of new release
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          # Fine-grained PAT with Issues:write on kerryhatcher/hatch-plugins.
+          GH_TOKEN: ${{ secrets.HATCH_PLUGINS_TOKEN }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "HATCH_PLUGINS_TOKEN not set; skipping. Would have notified for $TAG."
+            exit 0
+          fi
+          gh issue create -R kerryhatcher/hatch-plugins \
+            --title "Add/update whachadoin plugin $TAG" \
+            --body "Please add/update the **whachadoin** plugin in the marketplace.
+
+          - Source repo: https://github.com/kerryhatcher/whachadoin
+          - Plugin path: \`./plugin\` (manifest: \`plugin/.claude-plugin/plugin.json\`)
+          - Release: $TAG (https://github.com/kerryhatcher/whachadoin/releases/tag/$TAG)
+          - Adds cross-session work logging + todo tracking via the \`kwd\` CLI.
+
+          _Opened automatically by whachadoin's release-please workflow._"
